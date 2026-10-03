@@ -1,2 +1,0 @@
-# AIMBOT
-About
