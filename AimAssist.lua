@@ -1,7 +1,5 @@
---// MOBILE AIM ASSIST
---// R6 + R15 SUPPORT
---// For your own Roblox game
---// Place this LocalScript in:
+--// AIM ASSIST - YOUR OWN ROBLOX EXPERIENCE
+--// LocalScript
 --// StarterPlayer > StarterPlayerScripts
 
 local Players = game:GetService("Players")
@@ -12,7 +10,6 @@ local LocalPlayer = Players.LocalPlayer
 
 local Settings = {
 	Enabled = false,
-
 	WallCheck = true,
 
 	FOVEnabled = true,
@@ -20,12 +17,15 @@ local Settings = {
 	MinFOV = 50,
 	MaxFOV = 500,
 
-	Smoothing = 0.15,
+	-- 0.05 = weaker/slower
+	-- 0.50 = stronger/faster
+	AimStrength = 0.15,
+	MinStrength = 0.05,
+	MaxStrength = 0.50,
 }
 
---// R15 + R6 BODY PARTS
+--// R6 + R15
 local TargetParts = {
-	-- R15
 	"Head",
 	"UpperTorso",
 	"LowerTorso",
@@ -34,7 +34,6 @@ local TargetParts = {
 	"LeftUpperArm",
 	"LeftLowerArm",
 	"LeftHand",
-
 	"RightUpperArm",
 	"RightLowerArm",
 	"RightHand",
@@ -42,7 +41,6 @@ local TargetParts = {
 	"LeftUpperLeg",
 	"LeftLowerLeg",
 	"LeftFoot",
-
 	"RightUpperLeg",
 	"RightLowerLeg",
 	"RightFoot",
@@ -55,37 +53,40 @@ local TargetParts = {
 	"Right Leg",
 }
 
---// GUI
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "MobileAimAssist"
-ScreenGui.ResetOnSpawn = false
-ScreenGui.IgnoreGuiInset = true
-ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+--==================================================
+-- GUI
+--==================================================
+
+local Gui = Instance.new("ScreenGui")
+Gui.Name = "AimAssistUI"
+Gui.ResetOnSpawn = false
+Gui.IgnoreGuiInset = true
+Gui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
 local Menu = Instance.new("Frame")
-Menu.Size = UDim2.fromOffset(250, 300)
-Menu.Position = UDim2.new(0, 20, 0.5, -150)
+Menu.Size = UDim2.fromOffset(270, 390)
+Menu.Position = UDim2.new(0, 20, 0.5, -195)
 Menu.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 Menu.BorderSizePixel = 0
-Menu.Parent = ScreenGui
+Menu.Parent = Gui
 
 local MenuCorner = Instance.new("UICorner")
 MenuCorner.CornerRadius = UDim.new(0, 12)
 MenuCorner.Parent = Menu
 
---// TITLE
+-- Title
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, -45, 0, 40)
-Title.Position = UDim2.fromOffset(10, 0)
+Title.Size = UDim2.new(1, -50, 0, 40)
+Title.Position = UDim2.fromOffset(12, 2)
 Title.BackgroundTransparency = 1
-Title.Text = "Aim Assist"
+Title.Text = "🎯 Aim Assist"
 Title.TextColor3 = Color3.new(1, 1, 1)
-Title.TextSize = 20
+Title.TextSize = 19
 Title.Font = Enum.Font.GothamBold
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Parent = Menu
 
---// MINIMIZE BUTTON
+-- Minimize
 local Minimize = Instance.new("TextButton")
 Minimize.Size = UDim2.fromOffset(35, 35)
 Minimize.Position = UDim2.new(1, -40, 0, 3)
@@ -95,16 +96,16 @@ Minimize.TextColor3 = Color3.new(1, 1, 1)
 Minimize.TextSize = 24
 Minimize.Parent = Menu
 
---// RESTORE BUTTON
+-- Restore
 local Restore = Instance.new("TextButton")
 Restore.Size = UDim2.fromOffset(50, 50)
 Restore.Position = UDim2.fromOffset(20, 100)
 Restore.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 Restore.Text = "☰"
 Restore.TextColor3 = Color3.new(1, 1, 1)
-Restore.TextSize = 24
+Restore.TextSize = 23
 Restore.Visible = false
-Restore.Parent = ScreenGui
+Restore.Parent = Gui
 
 local RestoreCorner = Instance.new("UICorner")
 RestoreCorner.CornerRadius = UDim.new(1, 0)
@@ -120,84 +121,96 @@ Restore.Activated:Connect(function()
 	Restore.Visible = false
 end)
 
---// BUTTON CREATOR
-local function CreateButton(text, y)
-	local Button = Instance.new("TextButton")
+-- Button helper
+local function MakeButton(text, y)
+	local button = Instance.new("TextButton")
 
-	Button.Size = UDim2.new(1, -20, 0, 40)
-	Button.Position = UDim2.fromOffset(10, y)
+	button.Size = UDim2.new(1, -20, 0, 40)
+	button.Position = UDim2.fromOffset(10, y)
 
-	Button.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-	Button.TextColor3 = Color3.new(1, 1, 1)
+	button.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+	button.TextColor3 = Color3.new(1, 1, 1)
 
-	Button.TextSize = 15
-	Button.Font = Enum.Font.Gotham
+	button.TextSize = 15
+	button.Font = Enum.Font.Gotham
+	button.Text = text
 
-	Button.Text = text
-	Button.AutoButtonColor = true
+	button.Parent = Menu
 
-	Button.Parent = Menu
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 8)
+	corner.Parent = button
 
-	local Corner = Instance.new("UICorner")
-	Corner.CornerRadius = UDim.new(0, 8)
-	Corner.Parent = Button
-
-	return Button
+	return button
 end
 
---// AIM TOGGLE
-local AimButton = CreateButton("Aim Assist: OFF", 45)
+--==================================================
+-- AIM TOGGLE
+--==================================================
 
-AimButton.Activated:Connect(function()
-	Settings.Enabled = not Settings.Enabled
+local AimButton = MakeButton("Aim Assist: OFF", 48)
 
+local function UpdateAimButton()
 	if Settings.Enabled then
 		AimButton.Text = "Aim Assist: ON"
-		AimButton.BackgroundColor3 = Color3.fromRGB(50, 130, 70)
+		AimButton.BackgroundColor3 = Color3.fromRGB(45, 130, 65)
 	else
 		AimButton.Text = "Aim Assist: OFF"
 		AimButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
 	end
+end
+
+AimButton.Activated:Connect(function()
+	Settings.Enabled = not Settings.Enabled
+	UpdateAimButton()
 end)
 
---// WALL CHECK
-local WallButton = CreateButton("Wall Check: ON", 90)
+--==================================================
+-- WALL CHECK
+--==================================================
+
+local WallButton = MakeButton("👁 Wall Check: ON", 93)
 
 WallButton.Activated:Connect(function()
 	Settings.WallCheck = not Settings.WallCheck
 
 	if Settings.WallCheck then
-		WallButton.Text = "Wall Check: ON"
+		WallButton.Text = "👁 Wall Check: ON"
 	else
-		WallButton.Text = "Wall Check: OFF"
+		WallButton.Text = "👁 Wall Check: OFF"
 	end
 end)
 
---// FOV TOGGLE
-local FOVButton = CreateButton("FOV Circle: ON", 135)
+--==================================================
+-- FOV TOGGLE
+--==================================================
+
+local FOVButton = MakeButton("⭕ FOV Circle: ON", 138)
 
 FOVButton.Activated:Connect(function()
 	Settings.FOVEnabled = not Settings.FOVEnabled
 
 	if Settings.FOVEnabled then
-		FOVButton.Text = "FOV Circle: ON"
+		FOVButton.Text = "⭕ FOV Circle: ON"
 	else
-		FOVButton.Text = "FOV Circle: OFF"
+		FOVButton.Text = "⭕ FOV Circle: OFF"
 	end
 end)
 
---// FOV LABEL
+--==================================================
+-- FOV SLIDER
+--==================================================
+
 local FOVLabel = Instance.new("TextLabel")
 FOVLabel.Size = UDim2.new(1, -20, 0, 25)
-FOVLabel.Position = UDim2.fromOffset(10, 180)
+FOVLabel.Position = UDim2.fromOffset(10, 183)
 FOVLabel.BackgroundTransparency = 1
+FOVLabel.Text = "FOV: 150"
 FOVLabel.TextColor3 = Color3.new(1, 1, 1)
 FOVLabel.TextSize = 14
 FOVLabel.Font = Enum.Font.Gotham
-FOVLabel.Text = "FOV: 150"
 FOVLabel.Parent = Menu
 
---// FOV SLIDER
 local FOVSlider = Instance.new("Frame")
 FOVSlider.Size = UDim2.new(1, -20, 0, 12)
 FOVSlider.Position = UDim2.fromOffset(10, 215)
@@ -205,36 +218,26 @@ FOVSlider.BackgroundColor3 = Color3.fromRGB(55, 55, 55)
 FOVSlider.BorderSizePixel = 0
 FOVSlider.Parent = Menu
 
-local SliderCorner = Instance.new("UICorner")
-SliderCorner.CornerRadius = UDim.new(1, 0)
-SliderCorner.Parent = FOVSlider
+local FOVSliderCorner = Instance.new("UICorner")
+FOVSliderCorner.CornerRadius = UDim.new(1, 0)
+FOVSliderCorner.Parent = FOVSlider
 
 local FOVFill = Instance.new("Frame")
-FOVFill.Size = UDim2.fromScale(
-	(Settings.FOVRadius - Settings.MinFOV) /
-	(Settings.MaxFOV - Settings.MinFOV),
-	1
-)
-
+FOVFill.Size = UDim2.fromScale(0.22, 1)
 FOVFill.BackgroundColor3 = Color3.fromRGB(80, 150, 255)
 FOVFill.BorderSizePixel = 0
 FOVFill.Parent = FOVSlider
 
-local FillCorner = Instance.new("UICorner")
-FillCorner.CornerRadius = UDim.new(1, 0)
-FillCorner.Parent = FOVFill
+local FOVFillCorner = Instance.new("UICorner")
+FOVFillCorner.CornerRadius = UDim.new(1, 0)
+FOVFillCorner.Parent = FOVFill
 
---// FOV SLIDER DRAGGING
 local draggingFOV = false
 
 local function UpdateFOV(input)
-	local x = input.Position.X
-
-	local startX = FOVSlider.AbsolutePosition.X
-	local width = FOVSlider.AbsoluteSize.X
-
 	local percent = math.clamp(
-		(x - startX) / width,
+		(input.Position.X - FOVSlider.AbsolutePosition.X)
+		/ FOVSlider.AbsoluteSize.X,
 		0,
 		1
 	)
@@ -245,7 +248,6 @@ local function UpdateFOV(input)
 	)
 
 	FOVLabel.Text = "FOV: " .. Settings.FOVRadius
-
 	FOVFill.Size = UDim2.fromScale(percent, 1)
 end
 
@@ -258,54 +260,124 @@ FOVSlider.InputBegan:Connect(function(input)
 	end
 end)
 
-UserInputService.InputChanged:Connect(function(input)
-	if not draggingFOV then
-		return
-	end
+--==================================================
+-- AIM STRENGTH SLIDER
+--==================================================
 
-	if input.UserInputType == Enum.UserInputType.Touch
-		or input.UserInputType == Enum.UserInputType.MouseMovement then
+local StrengthLabel = Instance.new("TextLabel")
+StrengthLabel.Size = UDim2.new(1, -20, 0, 25)
+StrengthLabel.Position = UDim2.fromOffset(10, 245)
+StrengthLabel.BackgroundTransparency = 1
+StrengthLabel.Text = "Aim Strength: 15%"
+StrengthLabel.TextColor3 = Color3.new(1, 1, 1)
+StrengthLabel.TextSize = 14
+StrengthLabel.Font = Enum.Font.Gotham
+StrengthLabel.Parent = Menu
 
-		UpdateFOV(input)
-	end
-end)
+local StrengthSlider = Instance.new("Frame")
+StrengthSlider.Size = UDim2.new(1, -20, 0, 12)
+StrengthSlider.Position = UDim2.fromOffset(10, 277)
+StrengthSlider.BackgroundColor3 = Color3.fromRGB(55, 55, 55)
+StrengthSlider.BorderSizePixel = 0
+StrengthSlider.Parent = Menu
 
-UserInputService.InputEnded:Connect(function(input)
+local StrengthCorner = Instance.new("UICorner")
+StrengthCorner.CornerRadius = UDim.new(1, 0)
+StrengthCorner.Parent = StrengthSlider
+
+local StrengthFill = Instance.new("Frame")
+StrengthFill.Size = UDim2.fromScale(
+	(Settings.AimStrength - Settings.MinStrength)
+	/ (Settings.MaxStrength - Settings.MinStrength),
+	1
+)
+
+StrengthFill.BackgroundColor3 = Color3.fromRGB(80, 150, 255)
+StrengthFill.BorderSizePixel = 0
+StrengthFill.Parent = StrengthSlider
+
+local StrengthFillCorner = Instance.new("UICorner")
+StrengthFillCorner.CornerRadius = UDim.new(1, 0)
+StrengthFillCorner.Parent = StrengthFill
+
+local draggingStrength = false
+
+local function UpdateStrength(input)
+	local percent = math.clamp(
+		(input.Position.X - StrengthSlider.AbsolutePosition.X)
+		/ StrengthSlider.AbsoluteSize.X,
+		0,
+		1
+	)
+
+	Settings.AimStrength =
+		Settings.MinStrength +
+		(Settings.MaxStrength - Settings.MinStrength) * percent
+
+	StrengthLabel.Text =
+		"Aim Strength: "
+		.. math.floor(Settings.AimStrength * 100)
+		.. "%"
+
+	StrengthFill.Size = UDim2.fromScale(percent, 1)
+end
+
+StrengthSlider.InputBegan:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.Touch
 		or input.UserInputType == Enum.UserInputType.MouseButton1 then
 
-		draggingFOV = false
+		draggingStrength = true
+		UpdateStrength(input)
 	end
 end)
 
---// FOV CIRCLE
+--==================================================
+-- TOGGLE KEY
+--==================================================
+
+UserInputService.InputBegan:Connect(function(input, processed)
+	if processed then
+		return
+	end
+
+	if input.KeyCode == Enum.KeyCode.Q then
+		Settings.Enabled = not Settings.Enabled
+		UpdateAimButton()
+	end
+end)
+
+--==================================================
+-- FOV CIRCLE
+--==================================================
+
 local FOVCircle = Instance.new("Frame")
 FOVCircle.AnchorPoint = Vector2.new(0.5, 0.5)
 FOVCircle.Position = UDim2.fromScale(0.5, 0.5)
 FOVCircle.BackgroundTransparency = 1
 FOVCircle.BorderSizePixel = 2
-FOVCircle.BorderColor3 = Color3.fromRGB(255, 255, 255)
-FOVCircle.Parent = ScreenGui
+FOVCircle.BorderColor3 = Color3.new(1, 1, 1)
+FOVCircle.Parent = Gui
 
 local CircleCorner = Instance.new("UICorner")
 CircleCorner.CornerRadius = UDim.new(1, 0)
 CircleCorner.Parent = FOVCircle
 
---// VISIBILITY CHECK
-local function IsVisible(character, targetPart)
-	local Camera = workspace.CurrentCamera
+--==================================================
+-- VISIBILITY CHECK
+--==================================================
 
-	if not Camera or not targetPart then
+local function IsVisible(character, targetPart)
+	local camera = workspace.CurrentCamera
+
+	if not camera or not targetPart then
 		return false
 	end
 
-	local origin = Camera.CFrame.Position
+	local origin = camera.CFrame.Position
 	local direction = targetPart.Position - origin
 
 	local params = RaycastParams.new()
 	params.FilterType = Enum.RaycastFilterType.Exclude
-
-	-- Don't let your own character block the ray
 	params.FilterDescendantsInstances = {
 		LocalPlayer.Character
 	}
@@ -320,36 +392,34 @@ local function IsVisible(character, targetPart)
 		return true
 	end
 
-	-- The first thing hit must belong to the target
 	return result.Instance:IsDescendantOf(character)
 end
 
---// FIND CLOSEST BODY PART
-local function GetClosestBodyPart(character)
-	local Camera = workspace.CurrentCamera
+--==================================================
+-- FIND CLOSEST BODY PART
+--==================================================
 
-	if not Camera then
+local function GetClosestBodyPart(character)
+	local camera = workspace.CurrentCamera
+
+	if not camera then
 		return nil, math.huge
 	end
+
+	local center = Vector2.new(
+		camera.ViewportSize.X / 2,
+		camera.ViewportSize.Y / 2
+	)
 
 	local closestPart = nil
 	local closestDistance = math.huge
 
-	local screenCenter = Vector2.new(
-		Camera.ViewportSize.X / 2,
-		Camera.ViewportSize.Y / 2
-	)
-
 	for _, partName in ipairs(TargetParts) do
-
-		-- FindFirstChild automatically skips parts
-		-- that don't exist on the current rig.
 		local part = character:FindFirstChild(partName)
 
 		if part and part:IsA("BasePart") then
-
 			local screenPosition, onScreen =
-				Camera:WorldToViewportPoint(part.Position)
+				camera:WorldToViewportPoint(part.Position)
 
 			if onScreen and screenPosition.Z > 0 then
 
@@ -359,7 +429,7 @@ local function GetClosestBodyPart(character)
 				)
 
 				local distance =
-					(screenPoint - screenCenter).Magnitude
+					(screenPoint - center).Magnitude
 
 				if distance <= Settings.FOVRadius
 					and distance < closestDistance then
@@ -367,8 +437,8 @@ local function GetClosestBodyPart(character)
 					if not Settings.WallCheck
 						or IsVisible(character, part) then
 
-						closestDistance = distance
 						closestPart = part
+						closestDistance = distance
 					end
 				end
 			end
@@ -378,13 +448,15 @@ local function GetClosestBodyPart(character)
 	return closestPart, closestDistance
 end
 
---// FIND CLOSEST PLAYER
+--==================================================
+-- FIND NEAREST TARGET
+--==================================================
+
 local function GetClosestTarget()
 	local closestPart = nil
 	local closestDistance = math.huge
 
 	for _, player in ipairs(Players:GetPlayers()) do
-
 		if player ~= LocalPlayer then
 
 			local character = player.Character
@@ -400,8 +472,8 @@ local function GetClosestTarget()
 						GetClosestBodyPart(character)
 
 					if part and distance < closestDistance then
-						closestDistance = distance
 						closestPart = part
+						closestDistance = distance
 					end
 				end
 			end
@@ -411,111 +483,129 @@ local function GetClosestTarget()
 	return closestPart
 end
 
---// AIM AT TARGET
-local function AimAt(targetPart)
-	local Camera = workspace.CurrentCamera
+--==================================================
+-- SMOOTH AIM
+--==================================================
 
-	if not Camera or not targetPart then
+local function AimAt(targetPart)
+	local camera = workspace.CurrentCamera
+
+	if not camera or not targetPart then
 		return
 	end
 
-	local targetCFrame =
-		CFrame.lookAt(
-			Camera.CFrame.Position,
-			targetPart.Position
-		)
+	local targetCFrame = CFrame.lookAt(
+		camera.CFrame.Position,
+		targetPart.Position
+	)
 
-	Camera.CFrame =
-		Camera.CFrame:Lerp(
-			targetCFrame,
-			Settings.Smoothing
-		)
+	camera.CFrame = camera.CFrame:Lerp(
+		targetCFrame,
+		Settings.AimStrength
+	)
 end
 
---// MAIN LOOP
-RunService.RenderStepped:Connect(function()
+--==================================================
+-- INPUT DRAGGING
+--==================================================
 
-	local Camera = workspace.CurrentCamera
+UserInputService.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.Touch
+		or input.UserInputType == Enum.UserInputType.MouseMovement then
 
-	if not Camera then
-		return
-	end
-
-	-- FOV circle
-	if Settings.FOVEnabled then
-
-		FOVCircle.Visible = true
-
-		FOVCircle.Size = UDim2.fromOffset(
-			Settings.FOVRadius * 2,
-			Settings.FOVRadius * 2
-		)
-
-		FOVCircle.Position = UDim2.fromScale(0.5, 0.5)
-
-	else
-
-		FOVCircle.Visible = false
-
-	end
-
-	-- Aim assist
-	if Settings.Enabled then
-
-		local targetPart = GetClosestTarget()
-
-		if targetPart then
-			AimAt(targetPart)
+		if draggingFOV then
+			UpdateFOV(input)
 		end
 
+		if draggingStrength then
+			UpdateStrength(input)
+		end
 	end
 end)
 
---// DRAG MENU
+UserInputService.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.Touch
+		or input.UserInputType == Enum.UserInputType.MouseButton1 then
+
+		draggingFOV = false
+		draggingStrength = false
+	end
+end)
+
+--==================================================
+-- DRAG MENU
+--==================================================
+
 local draggingMenu = false
 local dragStart
-local startPosition
+local menuStart
 
 Title.InputBegan:Connect(function(input)
-
 	if input.UserInputType == Enum.UserInputType.Touch
 		or input.UserInputType == Enum.UserInputType.MouseButton1 then
 
 		draggingMenu = true
 		dragStart = input.Position
-		startPosition = Menu.Position
-
+		menuStart = Menu.Position
 	end
 end)
 
 UserInputService.InputChanged:Connect(function(input)
+	if draggingMenu then
+		if input.UserInputType == Enum.UserInputType.Touch
+			or input.UserInputType == Enum.UserInputType.MouseMovement then
 
-	if not draggingMenu then
-		return
-	end
+			local delta = input.Position - dragStart
 
-	if input.UserInputType == Enum.UserInputType.Touch
-		or input.UserInputType == Enum.UserInputType.MouseMovement then
-
-		local delta = input.Position - dragStart
-
-		Menu.Position = UDim2.new(
-			startPosition.X.Scale,
-			startPosition.X.Offset + delta.X,
-
-			startPosition.Y.Scale,
-			startPosition.Y.Offset + delta.Y
-		)
-
+			Menu.Position = UDim2.new(
+				menuStart.X.Scale,
+				menuStart.X.Offset + delta.X,
+				menuStart.Y.Scale,
+				menuStart.Y.Offset + delta.Y
+			)
+		end
 	end
 end)
 
 UserInputService.InputEnded:Connect(function(input)
-
 	if input.UserInputType == Enum.UserInputType.Touch
 		or input.UserInputType == Enum.UserInputType.MouseButton1 then
 
 		draggingMenu = false
+	end
+end)
 
+--==================================================
+-- MAIN LOOP
+--==================================================
+
+RunService.RenderStepped:Connect(function()
+
+	local camera = workspace.CurrentCamera
+
+	if not camera then
+		return
+	end
+
+	-- FOV
+	FOVCircle.Visible = Settings.FOVEnabled
+
+	if Settings.FOVEnabled then
+		FOVCircle.Size = UDim2.fromOffset(
+			Settings.FOVRadius * 2,
+			Settings.FOVRadius * 2
+		)
+
+		FOVCircle.Position =
+			UDim2.fromScale(0.5, 0.5)
+	end
+
+	-- Aim
+	if Settings.Enabled then
+		local target = GetClosestTarget()
+
+		if target then
+			AimAt(target)
+		end
 	end
 end)
